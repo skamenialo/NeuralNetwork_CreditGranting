@@ -1,13 +1,52 @@
 package com.skamenialo.creditgranting.gui;
 
+import com.skamenialo.creditgranting.Client;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import javax.swing.AbstractListModel;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 public class ClientSetDialog extends JDialog {
 
-    public ClientSetDialog(Frame owner, boolean modal) {
+    private JList mClientList;
+    private ClientModel mClientModel;
+    private boolean mLearning;
+
+    public ClientSetDialog(Frame owner, boolean modal, boolean learning) {
         super(owner, modal);
         initComponents();
+        if (learning) {
+            setTitle(MainWindow.bundle.getString("ELEMENTY UCZĄCE"));
+            mClientModel = new ClientModel(MainWindow.sLearningSet);
+        } else {
+            setTitle(MainWindow.bundle.getString("ELEMENTY WERYFIKUJĄCE"));
+            mClientModel = new ClientModel(MainWindow.sVerifyingSet);
+        }
+        init(learning);
+    }
+
+    public ClientSetDialog(Frame owner, boolean modal, List<Client> list) {
+        super(owner, modal);
+        initComponents();
+        setTitle(MainWindow.bundle.getString("ELEMENTY ZWERYFIKOWANE"));
+        mClientModel = new ClientModel(list);
+        jButton1.setVisible(false);
+        init(true);
+    }
+
+    private void init(boolean learning) {
+        mLearning = learning;
+        mClientList = new JList(mClientModel);
+        mClientList.setCellRenderer(new ClientCellRenderer());
+        mClientList.setVisibleRowCount(4);
+        jScrollPane2.setViewportView(mClientList);
     }
 
     /**
@@ -72,7 +111,14 @@ public class ClientSetDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        new AddClientDialog(this, true).setVisible(true);
+        AddClientDialog cd = new AddClientDialog(this, true, mLearning);
+        cd.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mClientModel.update();
+            }
+        });
+        cd.setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -84,4 +130,55 @@ public class ClientSetDialog extends JDialog {
     private javax.swing.JButton jButton2;
     private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
+
+    class ClientModel extends AbstractListModel {
+
+        private List<Client> items;
+
+        public ClientModel(List<Client> list) {
+            this.items = list;
+        }
+
+        @Override
+        public Object getElementAt(int index) {
+            return items.get(index);
+        }
+
+        @Override
+        public int getSize() {
+            return items.size();
+        }
+
+        public void update() {
+            this.fireContentsChanged(this, 0, items.size() - 1);
+        }
+    }
+
+    class ClientCellRenderer extends JLabel implements ListCellRenderer {
+
+        private final Color HIGHLIGHT_COLOR = new Color(0, 0, 128);
+
+        public ClientCellRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+            Client entry = (Client) value;
+            if (mLearning) {
+                setText(entry.isGrantedToString());
+            } else {
+                setText(entry.toString());
+            }
+            if (isSelected) {
+                setBackground(HIGHLIGHT_COLOR);
+                setForeground(Color.white);
+            } else {
+                setBackground(Color.white);
+                setForeground(Color.black);
+            }
+            return this;
+        }
+    }
 }

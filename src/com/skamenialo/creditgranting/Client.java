@@ -131,6 +131,7 @@ public class Client {
             isGranted = (char) System.in.read();
         } while ((isGranted != 't' && isGranted != 'n'));
         client.setGranted(isGranted == 't');
+        //TODO add random client
         return client;
     }
 

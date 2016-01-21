@@ -1,13 +1,52 @@
 package com.skamenialo.creditgranting.gui;
 
+import com.skamenialo.creditgranting.Client;
+import java.awt.Color;
 import java.awt.Dialog;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.regex.Pattern;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 
 public class AddClientDialog extends JDialog {
 
-    public AddClientDialog(Dialog owner, boolean modal) {
-        super(owner, modal);
+    private ActionListener mListener;
+    private boolean mLearning;
+
+    public AddClientDialog(Dialog owner, boolean modal, boolean learning) {
+        super(owner, false);
         initComponents();
+        mLearning = learning;
+        if (!learning) {
+            jRadioButton4.setVisible(false);
+            jRadioButton5.setVisible(false);
+        }
+        for (int i = 18; i <= 90; i++) {
+            jComboBox1.addItem(String.valueOf(i));
+        }
+        for (int i = 0; i <= 4; i++) {
+            jComboBox2.addItem(String.valueOf(i));
+        }
+        for (int i = 0; i <= 120; i++) {
+            jComboBox3.addItem(String.valueOf(i));
+        }
+    }
+
+    private void showError(JComponent component) {
+        if (component == null) {
+            jRadioButton4.setForeground(Color.black);
+            jRadioButton5.setForeground(Color.black);
+            jLabel7.setForeground(Color.black);
+            jLabel3.setForeground(Color.black);
+            jLabel6.setForeground(Color.black);
+        } else {
+            component.setForeground(Color.red);
+        }
+    }
+
+    public void addActionListener(ActionListener listener) {
+        mListener = listener;
     }
 
     /**
@@ -204,7 +243,53 @@ public class AddClientDialog extends JDialog {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        boolean isLoan = jRadioButton2.isSelected(),
+                isGranted = jRadioButton4.isSelected(),
+                error = false;
+        showError(null);
+        if (mLearning && !isGranted && !jRadioButton5.isSelected()) {
+            showError(jRadioButton5);
+            showError(jRadioButton4);
+            error = true;
+        }
+        int age = Integer.valueOf(String.valueOf(jComboBox1.getSelectedItem())),
+                children = Integer.valueOf(String.valueOf(jComboBox2.getSelectedItem())),
+                employment = Integer.valueOf(String.valueOf(jComboBox3.getSelectedItem()));//miesiace do końca pracy
+        double income = 0,
+                amountActiveLoan = 0,
+                amountNewLoan = 0;
+        String regex = "[\\d]+([.|,][\\d]*)?";
+        Pattern pattern = Pattern.compile(regex);
+        if (pattern.matcher(jTextField1.getText()).matches()) {
+            amountNewLoan = Double.parseDouble(jTextField1.getText());
+        } else {
+            showError(jLabel7);
+            error = true;
+        }
+        if (pattern.matcher(jTextField2.getText()).matches()) {
+            income = Double.parseDouble(jTextField2.getText());
+        } else {
+            showError(jLabel3);
+            error = true;
+        }
+        if (isLoan) {
+            if (pattern.matcher(jTextField3.getText()).matches()) {
+                amountActiveLoan = Double.parseDouble(jTextField3.getText());
+            } else {
+                showError(jLabel6);
+                error = true;
+            }
+        }
+        if (error) {
+            return;
+        }
+        if (mLearning) {
+            MainWindow.sLearningSet.add(new Client(isGranted, age, children, income, employment, isLoan, amountActiveLoan, amountNewLoan));
+        } else {
+            MainWindow.sVerifyingSet.add(new Client(age, children, income, employment, isLoan, amountActiveLoan, amountNewLoan));
+        }
+        mListener.actionPerformed(new ActionEvent(this, 0, MainWindow.bundle.getString("OK")));
+        setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed

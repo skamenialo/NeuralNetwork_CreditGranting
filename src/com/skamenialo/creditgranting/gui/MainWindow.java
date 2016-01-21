@@ -3,21 +3,59 @@ package com.skamenialo.creditgranting.gui;
 import com.skamenialo.creditgranting.Client;
 import com.skamenialo.creditgranting.NeuralNetwork;
 import com.skamenialo.creditgranting.RandomNumber;
+import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.ResourceBundle;
 
 public class MainWindow extends javax.swing.JFrame {
 
-    static NeuralNetwork sNeuralNetwork;
+    public static ResourceBundle bundle = ResourceBundle.getBundle("com/skamenialo/creditgranting/gui/Text");
+    public static NeuralNetwork sNeuralNetwork;
+    public static List<Client> sLearningSet;
+    public static List<Client> sVerifyingSet;
 
     /**
      * Creates new form TheWindow
      */
     public MainWindow() {
+        super(bundle.getString("UDZIELANIE KREDYTÓW"));
         initComponents();
+        sNeuralNetwork = new NeuralNetwork(this, sLearningSet);
+    }
+
+    public void reset() {
+        sNeuralNetwork.reset();
+        setFail(0);
+        setAge(0);
+        setEndFail(0);
+        jTextField1.setText("");
+        jButton3.setText(bundle.getString("ROZPOCZNIJ NAUKĘ "));
+        jButton4.setText(bundle.getString("RESETUJ"));
+        jButton5.setEnabled(false);
+    }
+
+    public void stop() {
+        sNeuralNetwork.stop();
+        jButton3.setText(bundle.getString("KONTYNUUJ NAUKĘ "));
+        jButton4.setText(bundle.getString("RESETUJ"));
+        jButton5.setEnabled(true);
+    }
+
+    public void setFail(int i) {
+        jLabel5.setText(String.valueOf(i));
+    }
+
+    public void setAge(int i) {
+        jLabel3.setText(String.valueOf(i));
+    }
+
+    public void setEndFail(int i) {
+        jLabel7.setText(String.valueOf(i));
     }
 
     private static List<Client> getStaticLearningSet() {
@@ -51,7 +89,7 @@ public class MainWindow extends javax.swing.JFrame {
         return learningElements;
     }
 
-    public static List<Client> getStaticVerifyingSet() {
+    private static List<Client> getStaticVerifyingSet() {
         List<Client> veryfyingElements = new ArrayList<>();
         veryfyingElements.add(new Client(27, 1, 2500, 36, false, 0, 5000));//przynano
         veryfyingElements.add(new Client(68, 0, 1000, (90 - 68) * 12, false, 0, 2000));//przyznano
@@ -63,8 +101,7 @@ public class MainWindow extends javax.swing.JFrame {
         return veryfyingElements;
     }
 
-    public static List<Client> getRandomSet(int min, int max) {
-
+    private static List<Client> getRandomSet(int min, int max) {
         List<Client> set = new ArrayList<>();
         int ilosc = Math.abs(RandomNumber.nextInt(min, max));
         for (int i = 0; i < ilosc; i++) {
@@ -159,6 +196,7 @@ public class MainWindow extends javax.swing.JFrame {
         });
 
         jButton5.setText(bundle.getString("WERYFIKUJ")); // NOI18N
+        jButton5.setEnabled(false);
         jButton5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton5ActionPerformed(evt);
@@ -239,23 +277,48 @@ public class MainWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        new ClientSetDialog(this, true).setVisible(true);
+        new ClientSetDialog(this, true, true).setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
+        new ClientSetDialog(this, true, false).setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // TODO add your handling code here:
+        jLabel1.setForeground(Color.black);
+        String regex = "[\\d]+";
+        Pattern pattern = Pattern.compile(regex);
+        if (jTextField1.getText().matches(regex)) {
+            sNeuralNetwork.setFail(Integer.parseInt(jTextField1.getText()));
+        } else {
+            jLabel1.setForeground(Color.red);
+            return;
+        }
+        if (!sNeuralNetwork.isLearning()) {
+            jButton3.setText(bundle.getString("AKTUALIZUJ"));
+            jButton4.setText(bundle.getString("ZATRZYMAJ"));
+            jButton5.setEnabled(false);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    sNeuralNetwork.start();
+                    stop();
+                }
+            }).start();
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
+        if (sNeuralNetwork.isLearning()) {
+            stop();
+        } else {
+            reset();
+        }
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        // TODO add your handling code here:
+        List<Client> list = sNeuralNetwork.verifyElements(sVerifyingSet);
+        new ClientSetDialog(this, true, list).setVisible(true);
     }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
@@ -286,23 +349,22 @@ public class MainWindow extends javax.swing.JFrame {
         //</editor-fold>
         //</editor-fold>
 
-        List<Client> learningSet = getStaticLearningSet();
-
-        for (int i = 0; i < learningSet.size(); i++) {
-            System.out.println("k[" + i + "]\t" + learningSet.get(i).toString());
+        sLearningSet = getStaticLearningSet();
+        for (int i = 0; i < sLearningSet.size(); i++) {
+            System.out.println("k[" + i + "]\t" + sLearningSet.get(i).toString());
         }
+
+        /*
         int ilosc = 0;//Math.abs(RandomNumber.nextInt(10, 25));
         for (int i = 0; i < ilosc; i++) {
             try {
-                learningSet.add(Client.getRandomClient());
+                sLearningSet.add(Client.getRandomClient());
             } catch (IOException ex) {
                 Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
-        sNeuralNetwork = new NeuralNetwork(learningSet);
-
-        sNeuralNetwork.verifyElements(getStaticVerifyingSet());
+         */
+        sVerifyingSet = getStaticVerifyingSet();
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
