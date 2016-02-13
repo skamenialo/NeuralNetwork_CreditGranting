@@ -178,15 +178,15 @@ public class MainWindow extends javax.swing.JFrame {
 
         jLabel2.setText(bundle.getString("LICZBA EPOK:")); // NOI18N
 
-        jLabel3.setText("0");
+        jLabel3.setText(MainWindow.bundle.getString("ZERO")); // NOI18N
 
         jLabel4.setText(bundle.getString("LICZBA BŁĘDÓW EPOKI:")); // NOI18N
 
-        jLabel5.setText("0");
+        jLabel5.setText(MainWindow.bundle.getString("ZERO")); // NOI18N
 
         jLabel6.setText(bundle.getString("LICZBA BŁĘDÓW PO ZAKOŃCZENIU NAUKI:")); // NOI18N
 
-        jLabel7.setText("0");
+        jLabel7.setText(MainWindow.bundle.getString("ZERO")); // NOI18N
 
         jButton4.setText(bundle.getString("RESETUJ")); // NOI18N
         jButton4.addActionListener(new java.awt.event.ActionListener() {
@@ -202,6 +202,8 @@ public class MainWindow extends javax.swing.JFrame {
                 jButton5ActionPerformed(evt);
             }
         });
+
+        jTextField1.setText(MainWindow.bundle.getString("ZERO")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
